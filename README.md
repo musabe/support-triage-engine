@@ -42,9 +42,6 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 ![Dashboard showing severity breakdown, category charts, and live classification log](docs/screenshots/dashboard.png)
 *Live dashboard at `/dashboard` — severity breakdown, top categories, confidence scores, and real-time classification log*
 
-### Docker Compose — services running
-![Terminal showing docker-compose up output](docs/screenshots/docker-compose-up.png)
-*Full stack spun up in one command — API server, PostgreSQL, and pgAdmin*
 
 ---
 
