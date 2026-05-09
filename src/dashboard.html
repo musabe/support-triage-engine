@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support Triage Engine — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border-light: rgba(0,0,0,0.06);
+    --text: #1a1a18;
+    --text-muted: #6b6a65;
+    --text-hint: #9b9a95;
+    --critical: #E24B4A; --critical-bg: #FCEBEB; --critical-text: #791F1F;
+    --high: #BA7517;    --high-bg: #FAEEDA;    --high-text: #633806;
+    --medium: #185FA5;  --medium-bg: #E6F1FB;  --medium-text: #0C447C;
+    --low: #3B6D11;     --low-bg: #EAF3DE;     --low-text: #27500A;
+    --accent: #534AB7;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242422;
+      --border: rgba(255,255,255,0.1);
+      --border-light: rgba(255,255,255,0.06);
+      --text: #f0ede8;
+      --text-muted: #9b9a95;
+      --text-hint: #6b6a65;
+      --critical: #F09595; --critical-bg: #501313; --critical-text: #F7C1C1;
+      --high: #EF9F27;    --high-bg: #412402;    --high-text: #FAC775;
+      --medium: #85B7EB;  --medium-bg: #042C53;  --medium-text: #B5D4F4;
+      --low: #97C459;     --low-bg: #173404;     --low-text: #C0DD97;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .last-updated {
+    font-size: 12px;
+    color: var(--text-hint);
+  }
+
+  button.refresh {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+  }
+
+  button.refresh:hover { background: var(--bg); }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-hint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .metric.critical .metric-value { color: var(--critical); }
+  .metric.high .metric-value     { color: var(--high); }
+  .metric.avg .metric-value      { color: var(--accent); }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .badge.CRITICAL { background: var(--critical-bg); color: var(--critical-text); }
+  .badge.HIGH     { background: var(--high-bg);     color: var(--high-text); }
+  .badge.MEDIUM   { background: var(--medium-bg);   color: var(--medium-text); }
+  .badge.LOW      { background: var(--low-bg);      color: var(--low-text); }
+
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+  }
+
+  .log-table th {
+    text-align: left;
+    padding: 0 12px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-hint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .log-table td {
+    padding: 10px 12px;
+    border-bottom: 0.5px solid var(--border-light);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-table tr:hover td { background: var(--bg); }
+
+  .col-time     { width: 130px; }
+  .col-severity { width: 90px; }
+  .col-cat      { width: 160px; }
+  .col-conf     { width: 80px; }
+  .col-ticket   { width: auto; }
+  .col-runbook  { width: 180px; }
+
+  .conf-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .conf-bar-bg {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    max-width: 48px;
+  }
+
+  .conf-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  .empty {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-hint);
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-banner {
+    background: var(--critical-bg);
+    color: var(--critical-text);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Support Triage Engine
+  </div>
+  <div class="header-right">
+    <span class="last-updated" id="last-updated">Loading...</span>
+    <button class="refresh" onclick="load()">
+      ↻ Refresh
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="error-banner" id="error-banner"></div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Total classified</div>
+      <div class="metric-value" id="m-total"><span class="spinner"></span></div>
+      <div class="metric-sub" id="m-total-sub">&nbsp;</div>
+    </div>
+    <div class="metric critical">
+      <div class="metric-label">Critical</div>
+      <div class="metric-value" id="m-critical">—</div>
+      <div class="metric-sub" id="m-critical-pct">&nbsp;</div>
+    </div>
+    <div class="metric high">
+      <div class="metric-label">High</div>
+      <div class="metric-value" id="m-high">—</div>
+      <div class="metric-sub" id="m-high-pct">&nbsp;</div>
+    </div>
+    <div class="metric avg">
+      <div class="metric-label">Avg confidence</div>
+      <div class="metric-value" id="m-conf">—</div>
+      <div class="metric-sub">across all tickets</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title">Severity breakdown</div>
+      <div class="legend" id="sev-legend"></div>
+      <div class="chart-wrap" style="height: 180px;">
+        <canvas id="sev-chart" role="img" aria-label="Severity breakdown donut chart">Severity breakdown of classified tickets.</canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top categories</div>
+      <div class="chart-wrap" style="height: 220px;">
+        <canvas id="cat-chart" role="img" aria-label="Top ticket categories bar chart">Bar chart of top ticket categories.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Recent classifications</div>
+    <div id="log-container">
+      <div class="empty"><span class="spinner"></span> Loading...</div>
+    </div>
+  </div>
+</main>
+
+<script>
+let sevChart, catChart;
+
+const SEV_COLORS = {
+  CRITICAL: '#E24B4A',
+  HIGH:     '#BA7517',
+  MEDIUM:   '#185FA5',
+  LOW:      '#3B6D11',
+};
+
+function fmt_time(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function fmt_conf(c) {
+  return Math.round(c * 100) + '%';
+}
+
+async function load() {
+  document.getElementById('last-updated').textContent = 'Refreshing...';
+  document.getElementById('error-banner').style.display = 'none';
+
+  try {
+    const resp = await fetch('/logs?limit=50');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const logs = data.logs || [];
+    render(logs);
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    document.getElementById('error-banner').textContent = 'Could not reach /logs — is the API running? ' + e.message;
+    document.getElementById('error-banner').style.display = 'block';
+    document.getElementById('last-updated').textContent = 'Error';
+  }
+}
+
+function render(logs) {
+  const valid = logs.filter(l => l.confidence > 0);
+
+  const total = logs.length;
+  const sevCounts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+  const catCounts = {};
+  let confSum = 0, confN = 0;
+
+  for (const l of logs) {
+    if (l.severity && sevCounts[l.severity] !== undefined) sevCounts[l.severity]++;
+    if (l.category) catCounts[l.category] = (catCounts[l.category] || 0) + 1;
+    if (l.confidence > 0) { confSum += l.confidence; confN++; }
+  }
+
+  const avgConf = confN > 0 ? Math.round((confSum / confN) * 100) : 0;
+
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-total-sub').textContent = valid.length + ' successful';
+  document.getElementById('m-critical').textContent = sevCounts.CRITICAL;
+  document.getElementById('m-critical-pct').textContent = total ? Math.round(sevCounts.CRITICAL / total * 100) + '% of tickets' : '';
+  document.getElementById('m-high').textContent = sevCounts.HIGH;
+  document.getElementById('m-high-pct').textContent = total ? Math.round(sevCounts.HIGH / total * 100) + '% of tickets' : '';
+  document.getElementById('m-conf').textContent = avgConf + '%';
+
+  renderSevChart(sevCounts, total);
+  renderCatChart(catCounts);
+  renderTable(logs);
+}
+
+function renderSevChart(sevCounts, total) {
+  const labels = Object.keys(sevCounts);
+  const values = Object.values(sevCounts);
+  const colors = labels.map(l => SEV_COLORS[l]);
+
+  const legend = document.getElementById('sev-legend');
+  legend.innerHTML = labels.map((l, i) => `
+    <span class="legend-item">
+      <span class="legend-dot" style="background:${colors[i]}"></span>
+      ${l} ${total ? Math.round(values[i]/total*100) + '%' : ''}
+    </span>`).join('');
+
+  if (sevChart) sevChart.destroy();
+  sevChart = new Chart(document.getElementById('sev-chart'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: 'transparent',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` }
+      }}
+    }
+  });
+}
+
+function renderCatChart(catCounts) {
+  const sorted = Object.entries(catCounts).sort((a,b) => b[1]-a[1]).slice(0, 7);
+  const labels = sorted.map(([k]) => k);
+  const values = sorted.map(([,v]) => v);
+  const wrapH = Math.max(220, labels.length * 36 + 60);
+  document.querySelector('#cat-chart').parentElement.style.height = wrapH + 'px';
+
+  if (catChart) catChart.destroy();
+  catChart = new Chart(document.getElementById('cat-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: '#534AB7',
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ` ${ctx.raw} ticket${ctx.raw !== 1 ? 's' : ''}` }
+      }},
+      scales: {
+        x: {
+          ticks: { stepSize: 1, color: '#9b9a95', font: { size: 11 } },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          border: { display: false },
+        },
+        y: {
+          ticks: { color: '#6b6a65', font: { size: 11 }, autoSkip: false },
+          grid: { display: false },
+          border: { display: false },
+        }
+      }
+    }
+  });
+}
+
+function renderTable(logs) {
+  const container = document.getElementById('log-container');
+  if (!logs.length) {
+    container.innerHTML = '<div class="empty">No classifications yet. Run a curl test to get started.</div>';
+    return;
+  }
+
+  const rows = logs.slice(0, 20).map(l => {
+    const conf = l.confidence || 0;
+    const confPct = Math.round(conf * 100);
+    const ticketText = (l.ticket_text || '').replace(/</g, '&lt;');
+    const truncated = ticketText.length > 60 ? ticketText.slice(0, 60) + '…' : ticketText;
+    return `<tr>
+      <td class="col-time" style="color:var(--text-muted)">${fmt_time(l.created_at)}</td>
+      <td class="col-severity"><span class="badge ${l.severity || ''}">${l.severity || '—'}</span></td>
+      <td class="col-cat" title="${(l.category||'').replace(/"/g,'')}">${l.category || '—'}</td>
+      <td class="col-conf">
+        <div class="conf-bar-wrap">
+          <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${confPct}%"></div></div>
+          <span style="font-size:11px;color:var(--text-muted)">${confPct}%</span>
+        </div>
+      </td>
+      <td class="col-ticket" title="${ticketText}">${truncated}</td>
+      <td class="col-runbook" style="color:var(--text-muted)" title="${(l.runbook||'').replace(/"/g,'')}">${l.runbook_id ? l.runbook_id + ' ' : ''}${l.runbook || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `<table class="log-table">
+    <thead><tr>
+      <th class="col-time">Time</th>
+      <th class="col-severity">Severity</th>
+      <th class="col-cat">Category</th>
+      <th class="col-conf">Confidence</th>
+      <th class="col-ticket">Ticket</th>
+      <th class="col-runbook">Runbook</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
