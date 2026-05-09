@@ -38,6 +38,10 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 ![pgAdmin or psql showing triage_log table](docs/screenshots/postgres-triage-log.png)
 *Every classification persisted to PostgreSQL for audit, pattern analysis, and retraining*
 
+### Web UI dashboard
+![Dashboard showing severity breakdown, category charts, and live classification log](docs/screenshots/dashboard.png)
+*Live dashboard at `/dashboard` — severity breakdown, top categories, confidence scores, and real-time classification log*
+
 ### Docker Compose — services running
 ![Terminal showing docker-compose up output](docs/screenshots/docker-compose-up.png)
 *Full stack spun up in one command — API server, PostgreSQL, and pgAdmin*
@@ -60,7 +64,7 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 ## 📁 Project Structure
 
 ```
-support-triage-engine/
+ai-support-triage-engine/
 ├── docker-compose.yml
 ├── Dockerfile
 ├── README.md
@@ -72,13 +76,15 @@ support-triage-engine/
 │   ├── db.py                # PostgreSQL connection + triage_log schema
 │   ├── config.py            # Env vars, model config
 │   ├── freshdesk.py         # Freshdesk REST API client
+│   ├── dashboard.html       # Web UI dashboard
 │   └── runbooks.py          # Runbook mapping by category
 ├── tests/
 │   └── test_classifier.py   # pytest integration tests
 └── docs/
     ├── FRESHDESK_SETUP.md   # Step-by-step Freshdesk webhook guide
     └── screenshots/
-        └── architecture-diagram.png
+        ├── architecture-diagram.png
+        └── dashboard.png
 ```
 
 ---
@@ -184,7 +190,7 @@ Categories covered: `API / OAuth`, `API / Webhook`, `API / Rate Limiting`, `Data
 | Freshdesk webhook integration | ✅ Done |
 | Confidence scoring + fallback | ✅ Done |
 | Jira webhook integration | 🔜 Planned |
-| Web UI dashboard | 🔜 Planned |
+| Web UI dashboard | ✅ Done |
 
 ---
 
