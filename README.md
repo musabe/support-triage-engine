@@ -28,15 +28,15 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 
 ### Ticket classification output (CLI)
 ![CLI output showing ticket classification](docs/screenshots/cli-classification-output.png)
-*Raw ticket in → structured triage output with severity, category, and runbook suggestion*
+*CLI output — HIGH severity, API / Webhook, 0.95 confidence, logged to PostgreSQL*
 
-### REST endpoint response (Postman)
-![Postman showing POST /triage response](docs/screenshots/postman-triage-response.png)
-*POST /triage endpoint returning JSON — ready to plug into a Freshdesk or Jira webhook*
+### REST endpoint response (Bruno)
+![Bruno showing POST /triage response](docs/screenshots/bruno-triage-response.png)
+*POST /triage endpoint returning JSON — 200 OK, HIGH severity, 0.92 confidence, RB-003 Webhook Delivery Failure*
 
 ### PostgreSQL log — classification history
-![pgAdmin or psql showing triage_log table](docs/screenshots/postgres-triage-log.png)
-*Every classification persisted to PostgreSQL for audit, pattern analysis, and retraining*
+![pgAdmin showing triage_log table with 10 classification records](docs/screenshots/postgres-triage-log.png)
+*Every classification persisted to PostgreSQL — full audit trail with severity, category, confidence, and runbook ID*
 
 ### Web UI dashboard
 ![Dashboard showing severity breakdown, category charts, and live classification log](docs/screenshots/dashboard.png)
@@ -57,7 +57,7 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 - **LLM** — Claude API (claude-sonnet-4-20250514)
 - **HTTP client** — httpx
 - **DB driver** — asyncpg
-- **Testing** — Postman, pytest
+- **Testing** — Bruno, pytest
 
 ---
 
