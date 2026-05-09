@@ -42,6 +42,10 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 ![Dashboard showing severity breakdown, category charts, and live classification log](docs/screenshots/dashboard.png)
 *Live dashboard at `/dashboard` — severity breakdown, top categories, confidence scores, and real-time classification log*
 
+### Automated test report
+![Test report showing 50 tickets: 38 PASS, 10 PARTIAL, 2 FAIL, 94% category accuracy, 93% avg confidence](docs/screenshots/test-report.png)
+*Automated test report — 50 Claude-generated tickets classified and scored across all severity levels and categories*
+
 
 ---
 
@@ -54,7 +58,7 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 - **LLM** — Claude API (claude-sonnet-4-20250514)
 - **HTTP client** — httpx
 - **DB driver** — asyncpg
-- **Testing** — Bruno, pytest
+- **Testing** — Bruno, pytest, automated LLM-generated test suite
 
 ---
 
@@ -76,12 +80,20 @@ ai-support-triage-engine/
 │   ├── dashboard.html       # Web UI dashboard
 │   └── runbooks.py          # Runbook mapping by category
 ├── tests/
-│   └── test_classifier.py   # pytest integration tests
+│   ├── test_classifier.py      # pytest integration tests
+│   ├── ticket_generator.py     # Claude-generated realistic test tickets
+│   ├── run_tests.py            # automated test runner + HTML report
+│   └── scheduler.py            # scheduled test runs (configurable interval)
+├── reports/                    # auto-generated HTML test reports
 └── docs/
     ├── FRESHDESK_SETUP.md   # Step-by-step Freshdesk webhook guide
     └── screenshots/
         ├── architecture-diagram.png
-        └── dashboard.png
+        ├── dashboard.png
+        ├── cli-classification-output.png
+        ├── bruno-triage-response.png
+        ├── postgres-triage-log.png
+        └── test-report.png
 ```
 
 ---
@@ -175,6 +187,47 @@ Categories covered: `API / OAuth`, `API / Webhook`, `API / Rate Limiting`, `Data
 
 ---
 
+## 🧪 Automated Testing
+
+The engine includes a self-testing framework that uses Claude to generate realistic tickets, classifies them, and produces a scored HTML report.
+
+### Test report
+
+![Test report showing 50 tickets classified with accuracy breakdown by severity and category](docs/screenshots/test-report.png)
+
+**Latest results (50 tickets):**
+
+| Metric | Score |
+|---|---|
+| Pass | 38 / 50 (76%) |
+| Category accuracy | 94% |
+| Severity accuracy | 78% |
+| Avg confidence | 93% |
+
+**Category highlights:** API / OAuth, API / Webhook, API / Rate Limiting, Infrastructure / Docker, Billing / Account all hit 100% accuracy.
+
+**Severity notes:** HIGH (100%) and CRITICAL (85%) are strong. LOW (62%) and MEDIUM (60%) show the model's tendency to upgrade ambiguous tickets — a known LLM pattern under active tuning.
+
+### Run the tests
+
+```bash
+# Run once — 20 tickets (default)
+python tests/run_tests.py
+
+# Run with more tickets
+python tests/run_tests.py --count 50
+
+# Schedule — run every 6 hours with 10 tickets
+python tests/scheduler.py --interval 6 --count 10
+
+# Run scheduler once and exit
+python tests/scheduler.py --once
+```
+
+Reports are saved to `reports/report_YYYYMMDD_HHMMSS.html` and open directly in any browser.
+
+---
+
 ## 🚧 Status
 
 | Feature | Status |
@@ -186,6 +239,7 @@ Categories covered: `API / OAuth`, `API / Webhook`, `API / Rate Limiting`, `Data
 | Runbook mapping (14 runbooks) | ✅ Done |
 | Freshdesk webhook integration | ✅ Done |
 | Confidence scoring + fallback | ✅ Done |
+| Automated test suite + HTML report | ✅ Done |
 | Jira webhook integration | 🔜 Planned |
 | Web UI dashboard | ✅ Done |
 
