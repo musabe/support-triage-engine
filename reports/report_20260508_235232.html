@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Triage Engine — Test Report</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f7f4; color: #1a1a18; font-size: 14px; padding: 2rem; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .meta { color: #6b6a65; font-size: 13px; margin-bottom: 2rem; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .metric { background: #fff; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 10px; padding: 1rem 1.25rem; }
+  .metric-label { font-size: 11px; color: #9b9a95; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .metric-value { font-size: 28px; font-weight: 500; }
+  .metric-value.green { color: #3B6D11; }
+  .metric-value.amber { color: #BA7517; }
+  .metric-value.red   { color: #A32D2D; }
+  .metric-value.purple { color: #534AB7; }
+  .section { background: #fff; border: 0.5px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .section-title { font-size: 11px; font-weight: 500; color: #9b9a95; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 0 12px 8px; font-size: 11px; color: #9b9a95; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 0.5px solid rgba(0,0,0,0.08); font-weight: 500; }
+  td { padding: 9px 12px; border-bottom: 0.5px solid rgba(0,0,0,0.05); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8f7f4; }
+  .good { color: #3B6D11; font-weight: 500; }
+  .bad  { color: #A32D2D; font-weight: 500; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .badge.PASS    { background: #EAF3DE; color: #27500A; }
+  .badge.PARTIAL { background: #FAEEDA; color: #633806; }
+  .badge.FAIL    { background: #FCEBEB; color: #791F1F; }
+  .sev { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .sev.CRITICAL { background: #FCEBEB; color: #791F1F; }
+  .sev.HIGH     { background: #FAEEDA; color: #633806; }
+  .sev.MEDIUM   { background: #E6F1FB; color: #0C447C; }
+  .sev.LOW      { background: #EAF3DE; color: #27500A; }
+  .ticket-text { color: #6b6a65; max-width: 300px; }
+  .row-fail td  { background: #fffafa; }
+</style>
+</head>
+<body>
+
+<h1>Triage Engine — Test Report</h1>
+<p class="meta">Run at 2026-05-09 03:52 UTC &nbsp;·&nbsp; 50 tickets generated and classified by Claude</p>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Total tickets</div>
+    <div class="metric-value purple">50</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Pass</div>
+    <div class="metric-value green">38</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Partial</div>
+    <div class="metric-value amber">10</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Fail</div>
+    <div class="metric-value red">2</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Severity accuracy</div>
+    <div class="metric-value amber">78%</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Category accuracy</div>
+    <div class="metric-value green">94%</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Avg confidence</div>
+    <div class="metric-value purple">93%</div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem;">
+  <div class="section">
+    <div class="section-title">Severity accuracy</div>
+    <table>
+      <thead><tr><th>Severity</th><th>Total</th><th>Correct</th><th>Accuracy</th></tr></thead>
+      <tbody><tr>
+            <td>CRITICAL</td>
+            <td>13</td>
+            <td>11</td>
+            <td>85%</td>
+        </tr><tr>
+            <td>LOW</td>
+            <td>8</td>
+            <td>5</td>
+            <td>62%</td>
+        </tr><tr>
+            <td>HIGH</td>
+            <td>14</td>
+            <td>14</td>
+            <td>100%</td>
+        </tr><tr>
+            <td>MEDIUM</td>
+            <td>15</td>
+            <td>9</td>
+            <td>60%</td>
+        </tr></tbody>
+    </table>
+  </div>
+  <div class="section">
+    <div class="section-title">Category accuracy</div>
+    <table>
+      <thead><tr><th>Category</th><th>Total</th><th>Correct</th><th>Accuracy</th></tr></thead>
+      <tbody><tr>
+            <td>API / OAuth</td>
+            <td>4</td>
+            <td>4</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>API / Rate Limiting</td>
+            <td>5</td>
+            <td>5</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>UI / Bug</td>
+            <td>4</td>
+            <td>4</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>Infrastructure / Docker</td>
+            <td>5</td>
+            <td>5</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>Billing / Account</td>
+            <td>5</td>
+            <td>5</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>API / Webhook</td>
+            <td>5</td>
+            <td>5</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>Authentication / Permissions</td>
+            <td>3</td>
+            <td>3</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>Database / Sync</td>
+            <td>3</td>
+            <td>3</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>Database / Performance</td>
+            <td>4</td>
+            <td>4</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>Database / Connectivity</td>
+            <td>3</td>
+            <td>3</td>
+            <td class="good">100%</td>
+        </tr><tr>
+            <td>Authentication / SSO</td>
+            <td>5</td>
+            <td>4</td>
+            <td class="good">80%</td>
+        </tr><tr>
+            <td>How-To / Documentation</td>
+            <td>3</td>
+            <td>2</td>
+            <td class="bad">67%</td>
+        </tr><tr>
+            <td>Data / Import-Export</td>
+            <td>1</td>
+            <td>0</td>
+            <td class="bad">0%</td>
+        </tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">All results</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Expected sev</th>
+        <th>Got sev</th>
+        <th>Category</th>
+        <th>Confidence</th>
+        <th>Ticket (truncated)</th>
+        <th>Runbook</th>
+      </tr>
+    </thead>
+    <tbody><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / OAuth</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Our OAuth tokens are expiring way before the 2 hour window that's documented. We're seeing tokens become invalid after like 30-45 minutes and it's causing our integration to fail constantly. This started happening yesterday around 3pm EST. We haven't changed anything on our end. Can someone please look into this ASAP? Our production app is affected and customers are complaining.">Our OAuth tokens are expiring way before the 2 hour window that's documented. We're seeing tokens be...</td>
+            <td>RB-002</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td>✓ How-To / Documentation</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Hey team, quick question - where can I find documentation on exporting user data in bulk? We need to pull about 50k records for a data migration project. I checked the docs but only found info on single record exports. Thanks!">Hey team, quick question - where can I find documentation on exporting user data in bulk? We need to...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / Rate Limiting</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Getting 429 errors constantly since this morning. We're definitely not exceeding the 1000 req/min limit stated in our enterprise plan. Checked our logs and we're averaging maybe 300-400 requests per minute. Something seems broken on your end. Ticket number for reference: our internal tracking shows this started at 09:23 UTC.">Getting 429 errors constantly since this morning. We're definitely not exceeding the 1000 req/min li...</td>
+            <td>RB-004</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ UI / Bug</td>
+            <td>85%</td>
+            <td class="ticket-text" title="The dashboard is showing incorrect data for the last 3 days. Specifically the analytics widget on the main page - the numbers don't match what we see when we drill down into individual reports. Cleared cache, tried different browsers, same issue. Not urgent but definitely confusing for our team.">The dashboard is showing incorrect data for the last 3 days. Specifically the analytics widget on th...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ Authentication / SSO</td>
+            <td>95%</td>
+            <td class="ticket-text" title="URGENT: Our entire SSO is down. None of our 200+ employees can log in. Getting error 'SAML assertion validation failed' when trying to authenticate through Okta. This worked fine until about 20 minutes ago. We need immediate assistance - our whole company is locked out of the platform.">URGENT: Our entire SSO is down. None of our 200+ employees can log in. Getting error 'SAML assertion...</td>
+            <td>RB-010</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Infrastructure / Docker</td>
+            <td>92%</td>
+            <td class="ticket-text" title="We deployed the latest Docker image (v4.2.1) to our staging environment and the container won't start. Logs show 'failed to initialize database connection pool' but our DB credentials haven't changed and the old image (v4.1.8) works fine with the same config. Can you advise? Not blocking prod yet but need to resolve before we can move forward with this version.">We deployed the latest Docker image (v4.2.1) to our staging environment and the container won't star...</td>
+            <td>RB-008</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Billing / Account</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Question about billing - we were charged for 47 seats this month but we only have 42 active users. Can someone review our account? Company name is Acme Digital Solutions, account ID ACD-9847. Not super urgent but want to make sure we're not being overcharged going forward.">Question about billing - we were charged for 47 seats this month but we only have 42 active users. C...</td>
+            <td>RB-014</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / Webhook</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Webhook delivery is failing for the order.completed event. We're getting successful 200 responses from your system but our endpoint never receives the POST request. Other webhook events (order.created, order.updated) are working fine. Started noticing this around 6 hours ago. We've verified our endpoint is up and accepting requests from other services. Our webhook URL is https://api.storefront-pro.io/webhooks/orders and we're on the business plan.">Webhook delivery is failing for the order.completed event. We're getting successful 200 responses fr...</td>
+            <td>RB-003</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Authentication / Permissions</td>
+            <td>85%</td>
+            <td class="ticket-text" title="Hi, I'm trying to give our new team member read-only access to reports but every time I set their role to 'Viewer' they still have edit permissions. I've tried removing and re-adding them, same problem. Am I missing something or is this a bug? Their email is sarah.chen@techstartup.com if you need to check the account.">Hi, I'm trying to give our new team member read-only access to reports but every time I set their ro...</td>
+            <td>RB-011</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Database / Sync</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Database sync has been stuck at 87% for over 6 hours now. We initiated a full sync this morning after updating some schema mappings and it just stopped progressing. The sync job ID is sync_7h2k9m4p. No error messages showing up in the UI, just frozen. We need this to complete today if possible as we have a client demo tomorrow that requires the updated data.">Database sync has been stuck at 87% for over 6 hours now. We initiated a full sync this morning afte...</td>
+            <td>RB-005</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ API / Webhook</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Hey, our webhooks just stopped working about 30 minutes ago. We're getting 500 errors on our endpoint but nothing changed on our side. This is blocking our entire order processing pipeline and we have customers waiting. Can someone please look into this ASAP? Our webhook endpoint is https://api.acmeretail.io/webhooks/orders and we're subscribed to order.created events.">Hey, our webhooks just stopped working about 30 minutes ago. We're getting 500 errors on our endpoin...</td>
+            <td>RB-003</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td>✗ How-To / Documentation</td>
+            <td>85%</td>
+            <td class="ticket-text" title="Hi team - I'm trying to set up SSO for our organization using Okta and I'm a bit confused by the documentation. Do I need to create the SAML app in Okta first or configure it in your dashboard first? Also, where exactly do I find the ACS URL? The docs mention it but don't show a screenshot. Not urgent, just want to get this set up by end of week. Thanks!">Hi team - I'm trying to set up SSO for our organization using Okta and I'm a bit confused by the doc...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ Database / Performance</td>
+            <td>95%</td>
+            <td class="ticket-text" title="We are experiencing severe database performance degradation since approximately 11:00 AM EST. Query response times have increased from ~200ms to 8-12 seconds. This is affecting all production users. We have not made any schema changes or deployed new code. Database instance: prod-db-us-east-1. Attached are slow query logs from the past hour. Please escalate immediately.">We are experiencing severe database performance degradation since approximately 11:00 AM EST. Query ...</td>
+            <td>RB-007</td>
+        </tr><tr class="row-fail">
+            <td><span class="badge FAIL">FAIL</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td>✗ How-To / Documentation</td>
+            <td>92%</td>
+            <td class="ticket-text" title="quick question - how do I export all user data from the last 6 months? need it for an audit. is there a bulk export feature or do i need to use the api?">quick question - how do I export all user data from the last 6 months? need it for an audit. is ther...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / Rate Limiting</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Getting rate limited on the /v2/customers endpoint but according to your docs we should have 10k requests per hour and we're only at like 3k. The error message says 'Rate limit exceeded' with a 429 status code. Is there some other limit I'm not aware of? This is causing our nightly sync job to fail. Can you check our account settings or raise the limit?">Getting rate limited on the /v2/customers endpoint but according to your docs we should have 10k req...</td>
+            <td>RB-004</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td>✓ UI / Bug</td>
+            <td>92%</td>
+            <td class="ticket-text" title="The dashboard isn't loading correctly - when I click on the Analytics tab, I just see a blank white screen. Works fine in Chrome but broken in Firefox. Using Firefox 121 on macOS. Not blocking me completely since I can use Chrome but figured you'd want to know.">The dashboard isn't loading correctly - when I click on the Analytics tab, I just see a blank white ...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Infrastructure / Docker</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Our Docker containers are failing to start after pulling the latest image (v3.4.1). Error message is 'exec format error' during container initialization. We're running Docker 24.0.6 on Ubuntu 22.04 LTS. The previous version (v3.4.0) was working fine. Rolled back for now but need to update soon. Can you verify the image architecture?">Our Docker containers are failing to start after pulling the latest image (v3.4.1). Error message is...</td>
+            <td>RB-008</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Authentication / Permissions</td>
+            <td>92%</td>
+            <td class="ticket-text" title="I added a new user to our team yesterday and gave them Editor permissions but they're saying they can't edit anything, only view. I've double checked the permissions settings and it shows Editor role assigned. Their email is jenny.wong@brightwave.com. Is there a propagation delay or something? They need access today.">I added a new user to our team yesterday and gave them Editor permissions but they're saying they ca...</td>
+            <td>RB-011</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Billing / Account</td>
+            <td>95%</td>
+            <td class="ticket-text" title="We were charged $2,847 on our last invoice but based on our usage dashboard it should be closer to $2,200. The line item for 'API Calls' shows 18.5M calls but our internal monitoring shows we only made 14.2M calls last month. Can someone from billing review this and send a corrected invoice? Account ID: BW-9384.">We were charged $2,847 on our last invoice but based on our usage dashboard it should be closer to $...</td>
+            <td>RB-014</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ Database / Connectivity</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Cannot connect to database cluster. Getting connection timeout errors from all application servers. Started around 2:45 PM PST. Checked our network and firewall rules - nothing changed. Status page shows all systems operational but we definitely cannot connect. Database endpoint: cluster-prod-7a8f.clouddb.io:5432. This is a complete outage for us.">Cannot connect to database cluster. Getting connection timeout errors from all application servers. ...</td>
+            <td>RB-006</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ API / OAuth</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Our production API calls started failing about 45 minutes ago with 401 errors. We haven't changed anything on our end. The OAuth tokens we're using were working fine yesterday and shouldn't be expired for another 2 weeks. This is blocking our entire integration and customers are calling. Need urgent help ASAP!!!">Our production API calls started failing about 45 minutes ago with 401 errors. We haven't changed an...</td>
+            <td>RB-002</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ API / Webhook</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Hey team, quick question - I'm trying to set up webhooks for the first time and I'm getting a 200 response when I register the endpoint, but we're never receiving any events. I've checked our firewall logs and nothing is being blocked. The endpoint URL is https://app.nexusdata.io/webhooks/inbound and it works fine when I curl it manually. Am I missing something in the setup? Thanks!">Hey team, quick question - I'm trying to set up webhooks for the first time and I'm getting a 200 re...</td>
+            <td>RB-003</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / Rate Limiting</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Getting rate limited constantly since this morning. Error says 429 too many requests but we're only making like 50 calls per minute which should be well under our plan limit. Is there an issue on your side or did something change with the rate limits?">Getting rate limited constantly since this morning. Error says 429 too many requests but we're only ...</td>
+            <td>RB-004</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Database / Sync</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Data sync between our Postgres instance and your platform has been stuck at 87% for the past 6 hours. The sync job shows as running but no progress. We have a demo with a major client in 3 hours and need this data synced. Job ID: sync_7h4k2m9p. Please advise urgently.">Data sync between our Postgres instance and your platform has been stuck at 87% for the past 6 hours...</td>
+            <td>RB-005</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Database / Performance</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Dashboard is loading extremely slowly, takes 30-45 seconds just to see the main page. Queries that used to take 2-3 seconds are now timing out. Started noticing this degradation over the past week but today it's completely unusable. We're on the Enterprise plan. Our account ID is ENT-9847.">Dashboard is loading extremely slowly, takes 30-45 seconds just to see the main page. Queries that u...</td>
+            <td>RB-007</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Database / Connectivity</td>
+            <td>85%</td>
+            <td class="ticket-text" title="can't connect to db. connection string looks right but keep getting connection refused errors. tried from multiple machines. is the db instance down?">can't connect to db. connection string looks right but keep getting connection refused errors. tried...</td>
+            <td>RB-006</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Infrastructure / Docker</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Following your Docker deployment guide but the container keeps crashing on startup. I'm using the latest image version 3.2.1 with the environment variables specified in the docs. Error logs show something about missing volume mounts but I've defined them in docker-compose.yml exactly as shown in your example. Running on Ubuntu 22.04 LTS. Can someone help me figure out what I'm doing wrong? Happy to provide full logs if needed.">Following your Docker deployment guide but the container keeps crashing on startup. I'm using the la...</td>
+            <td>RB-008</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ Authentication / SSO</td>
+            <td>95%</td>
+            <td class="ticket-text" title="SSO login is completely broken for our organization. Users are clicking the SSO button, getting redirected to Okta, authenticating successfully, but then just getting a blank white screen when redirected back. This started after your maintenance window last night. We have 200+ employees who cannot access the platform right now. This is a P0 incident for us.">SSO login is completely broken for our organization. Users are clicking the SSO button, getting redi...</td>
+            <td>RB-010</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Billing / Account</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Hi there, I need to update our billing information. The credit card on file is expiring next month and I want to add a new one before we get any service interruptions. I tried updating it in the billing section but the save button just spins and nothing happens. Using Chrome on Mac if that matters.">Hi there, I need to update our billing information. The credit card on file is expiring next month a...</td>
+            <td>RB-014</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Authentication / Permissions</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Question about user permissions - I added a new team member yesterday with the Viewer role but they're saying they can edit records which shouldn't be possible. I double checked and their role is definitely set to Viewer in the admin panel. Is there a bug with role permissions or am I misunderstanding what Viewer access includes? Our security team is concerned about this.">Question about user permissions - I added a new team member yesterday with the Viewer role but they'...</td>
+            <td>RB-011</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ API / OAuth</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Our production API integration has been completely down for the past 45 minutes. We're getting 401 errors on every OAuth token refresh attempt. This is affecting all of our customers and we're losing revenue. Our client_id is cli_8392hd92 and we haven't changed anything in our config. This needs to be fixed immediately - we have SLA commitments to our users.">Our production API integration has been completely down for the past 45 minutes. We're getting 401 e...</td>
+            <td>RB-002</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td>✓ How-To / Documentation</td>
+            <td>92%</td>
+            <td class="ticket-text" title="hey quick question - where do i find the docs on exporting user data to csv? i looked through the help center but couldn't find anything specific. we need to pull about 50k records for an audit. thanks!">hey quick question - where do i find the docs on exporting user data to csv? i looked through the he...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Database / Performance</td>
+            <td>95%</td>
+            <td class="ticket-text" title="We've noticed our database queries have been taking significantly longer over the past week. Our dashboard loads that used to take 2-3 seconds are now taking 15-20 seconds. We're on the Enterprise plan with the dedicated cluster option. Can someone look into this? Our account ID is ACC-29847. Not an emergency but it's really impacting our team's productivity.">We've noticed our database queries have been taking significantly longer over the past week. Our das...</td>
+            <td>RB-007</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / Webhook</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Getting webhook delivery failures since yesterday afternoon around 3pm EST. The endpoint is https://api.zenithdata.io/webhooks/incoming and it's been stable for months. I can see in your dashboard that attempts are being made but we're not receiving anything on our end. Can you check your logs to see what response codes you're getting?">Getting webhook delivery failures since yesterday afternoon around 3pm EST. The endpoint is https://...</td>
+            <td>RB-003</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ Authentication / SSO</td>
+            <td>95%</td>
+            <td class="ticket-text" title="URGENT: SSO login completely broken for our entire organization. Nobody can access the platform. We're getting redirected to the login page in an infinite loop. We use Okta as our identity provider and nothing has changed on our end. This is blocking 200+ employees from working. Please escalate immediately.">URGENT: SSO login completely broken for our entire organization. Nobody can access the platform. We'...</td>
+            <td>RB-010</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Infrastructure / Docker</td>
+            <td>92%</td>
+            <td class="ticket-text" title="I'm trying to deploy the new Docker image v3.2.1 to our staging environment but the container keeps crashing on startup. The logs show something about a missing environment variable DATABASE_ENCRYPTION_KEY but that's definitely set in our docker-compose file. Running on Docker version 24.0.6. Here's the error: Error: Required environment variable DATABASE_ENCRYPTION_KEY is not set or is empty. Exit code 1.">I'm trying to deploy the new Docker image v3.2.1 to our staging environment but the container keeps ...</td>
+            <td>RB-008</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Billing / Account</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Can someone explain why we got charged $847 this month when our plan is supposed to be $299? I see some line items for API overages but we shouldn't be anywhere near the limit. Can you break down these charges? Account email is billing@craftworks.com">Can someone explain why we got charged $847 this month when our plan is supposed to be $299? I see s...</td>
+            <td>RB-014</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / Rate Limiting</td>
+            <td>95%</td>
+            <td class="ticket-text" title="We're hitting rate limits on the /v2/analytics endpoint way more frequently than expected. According to the docs we should have 10,000 requests per hour but we're getting 429 responses after only about 3,000 calls. Is there a separate limit for this specific endpoint that's not documented? We're trying to build a real-time dashboard and this is blocking us.">We're hitting rate limits on the /v2/analytics endpoint way more frequently than expected. According...</td>
+            <td>RB-004</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td>✓ UI / Bug</td>
+            <td>95%</td>
+            <td class="ticket-text" title="minor ui bug - when you click the Export button on the Reports page the loading spinner never goes away even after the download completes. you have to refresh the page to make it disappear. doesn't break anything but looks unpolished. using chrome 120 on mac. not urgent just wanted to report it.">minor ui bug - when you click the Export button on the Reports page the loading spinner never goes a...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Database / Sync</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Our sync job has been stuck at 67% for over 3 hours. The job ID is sync_job_49283hd. We're trying to sync approximately 2.3M records from our Postgres database and it was moving fine until it just stopped. The status still shows 'In Progress' but nothing is happening. We need this data synced before our monthly reporting deadline tomorrow morning.">Our sync job has been stuck at 67% for over 3 hours. The job ID is sync_job_49283hd. We're trying to...</td>
+            <td>RB-005</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ API / OAuth</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Our production API integration stopped working about 45 minutes ago. We're getting 401 errors on every request even though we haven't changed anything on our end. The OAuth token refresh is failing with 'invalid_grant' error. This is blocking our entire customer onboarding flow and we have 30+ customers stuck right now. Please escalate immediately.">Our production API integration stopped working about 45 minutes ago. We're getting 401 errors on eve...</td>
+            <td>RB-002</td>
+        </tr><tr class="row-fail">
+            <td><span class="badge FAIL">FAIL</span></td>
+            <td><span class="sev LOW">LOW</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✗ Data / Import-Export</td>
+            <td>92%</td>
+            <td class="ticket-text" title="hey team, quick question - where can i find docs on how to export all user data from our account? need to pull everything for a compliance audit next week. thanks!">hey team, quick question - where can i find docs on how to export all user data from our account? ne...</td>
+            <td>RB-012</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Database / Performance</td>
+            <td>92%</td>
+            <td class="ticket-text" title="We've been experiencing extremely slow query performance since yesterday evening around 6pm EST. Our dashboard that normally loads in under 2 seconds is now taking 45+ seconds. We have about 2.3M records in our primary dataset. I checked the status page and didn't see any incidents reported. Can someone look into this? Our account ID is acct_94KL2X.">We've been experiencing extremely slow query performance since yesterday evening around 6pm EST. Our...</td>
+            <td>RB-007</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ UI / Bug</td>
+            <td>92%</td>
+            <td class="ticket-text" title="The button on the settings page to add new team members is completely unresponsive. I've tried in Chrome, Firefox, and Safari. Console shows a JavaScript error: 'Cannot read property userId of undefined'. Not super urgent but wanted to report it.">The button on the settings page to add new team members is completely unresponsive. I've tried in Ch...</td>
+            <td>RB-000</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ API / Webhook</td>
+            <td>95%</td>
+            <td class="ticket-text" title="URGENT: Our webhook endpoint stopped receiving events approximately 2 hours ago at 14:23 UTC. We checked our server logs and we're not getting any incoming requests from your IPs. This is critical because we use webhooks to trigger payment processing. We need this resolved ASAP or we'll have to manually process hundreds of transactions.">URGENT: Our webhook endpoint stopped receiving events approximately 2 hours ago at 14:23 UTC. We che...</td>
+            <td>RB-003</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Authentication / SSO</td>
+            <td>95%</td>
+            <td class="ticket-text" title="I'm trying to configure SSO for our organization using Okta but I keep getting redirected to an error page after the SAML assertion. I've double-checked the ACS URL and Entity ID match what's in your documentation. Can you help troubleshoot? I can provide the SAML response if needed.">I'm trying to configure SSO for our organization using Okta but I keep getting redirected to an erro...</td>
+            <td>RB-010</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td>✓ Billing / Account</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Quick billing question - we were charged $2,847 on March 1st but our invoice shows $2,340. The difference seems to be from overage charges but we didn't receive any notification that we exceeded our plan limits. Can someone explain the discrepancy?">Quick billing question - we were charged $2,847 on March 1st but our invoice shows $2,340. The diffe...</td>
+            <td>RB-014</td>
+        </tr><tr class="row-partial">
+            <td><span class="badge PARTIAL">PARTIAL</span></td>
+            <td><span class="sev MEDIUM">MEDIUM</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ API / Rate Limiting</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Getting rate limited on API endpoint /v2/analytics/events even though we're only making about 300 requests per minute and our plan says we get 1000 req/min. Been happening for the past 3 days. Response headers show X-RateLimit-Remaining: 0 almost immediately. Something seems misconfigured on your end.">Getting rate limited on API endpoint /v2/analytics/events even though we're only making about 300 re...</td>
+            <td>RB-004</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td><span class="sev CRITICAL">CRITICAL</span></td>
+            <td>✓ Database / Connectivity</td>
+            <td>95%</td>
+            <td class="ticket-text" title="Cannot connect to database cluster db-prod-us-east-1c. Getting connection timeout errors across all our application servers. Started at 09:15 this morning. All other services appear operational. This is affecting 100% of our users.">Cannot connect to database cluster db-prod-us-east-1c. Getting connection timeout errors across all ...</td>
+            <td>RB-006</td>
+        </tr><tr class="row-pass">
+            <td><span class="badge PASS">PASS</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td><span class="sev HIGH">HIGH</span></td>
+            <td>✓ Infrastructure / Docker</td>
+            <td>92%</td>
+            <td class="ticket-text" title="Our DevOps engineer deployed the latest Docker image version 3.2.1 to staging and now the container won't start. Logs show 'Error: Module not found @core/dependencies' but this module exists in the image. Version 3.2.0 works fine. Not blocking production but we need to deploy this version by Friday for a client demo.">Our DevOps engineer deployed the latest Docker image version 3.2.1 to staging and now the container ...</td>
+            <td>RB-008</td>
+        </tr></tbody>
+  </table>
+</div>
+
+</body>
+</html>

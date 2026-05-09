@@ -8,11 +8,17 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Claude / Anthropic
     anthropic_api_key: str = ""
-    claude_model: str = "claude-sonnet-4-20250514"
+    claude_model: str = "claude-sonnet-4-5"
 
     # Freshdesk
     freshdesk_domain: str = ""          # e.g. "yourcompany.freshdesk.com"
     freshdesk_api_key: str = ""         # Freshdesk API key (Profile Settings)
+
+    # Jira Cloud
+    jira_domain: str = ""              # e.g. "yourcompany.atlassian.net"
+    jira_email: str = ""               # your Jira account email
+    jira_api_token: str = ""           # API token from id.atlassian.com/manage-profile/security
+    jira_issue_types: str = "Bug,Support"  # comma-separated issue types to triage
 
     # PostgreSQL
     database_url: str = "postgresql://triage:triage@localhost:5432/triage"

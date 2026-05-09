@@ -8,16 +8,17 @@ import asyncio
 import json
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.responses import JSONResponse, HTMLResponse
-from pathlib import Path
 from pydantic import BaseModel
 
 from classifier import classify_ticket
 from db import init_db, log_classification
 from freshdesk import update_ticket
+from jira_client import update_issue
 from config import settings
 
 
@@ -29,7 +30,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="AI Support Triage Engine",
-    description="Classifies Freshdesk tickets by severity, category, and runbook using Claude",
+    description="Classifies support tickets by severity, category, and runbook using Claude",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -37,11 +38,6 @@ app = FastAPI(
 
 class TicketPayload(BaseModel):
     ticket: str
-
-
-class FreshdeskWebhookPayload(BaseModel):
-    """Freshdesk webhook shape — only fields we need"""
-    freshdesk_webhook: dict | None = None
 
 
 # ── REST endpoint (direct) ────────────────────────────────────────────────────
@@ -54,25 +50,22 @@ async def triage_ticket(payload: TicketPayload, background_tasks: BackgroundTask
     return result
 
 
-# ── Freshdesk webhook endpoint ────────────────────────────────────────────────
+# ── Freshdesk webhook ─────────────────────────────────────────────────────────
 
 @app.post("/webhook/freshdesk")
 async def freshdesk_webhook(request: Request, background_tasks: BackgroundTasks):
     """
-    Receives Freshdesk webhook events (ticket.created / ticket.updated).
-    Classifies the ticket and writes results back to Freshdesk.
+    Receives Freshdesk webhook events (ticket.created).
+    Classifies and writes results back to Freshdesk.
     """
     try:
         body = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
-    # Freshdesk webhook envelope
-    # https://support.freshdesk.com/support/solutions/articles/37602
     freshdesk_data = body.get("freshdesk_webhook", body)
-
-    ticket_id = freshdesk_data.get("ticket_id") or freshdesk_data.get("id")
-    subject = freshdesk_data.get("ticket_subject", "")
+    ticket_id   = freshdesk_data.get("ticket_id") or freshdesk_data.get("id")
+    subject     = freshdesk_data.get("ticket_subject", "")
     description = freshdesk_data.get("ticket_description", "")
 
     if not ticket_id:
@@ -82,16 +75,100 @@ async def freshdesk_webhook(request: Request, background_tasks: BackgroundTasks)
     if not ticket_text:
         raise HTTPException(status_code=400, detail="Empty ticket text")
 
-    # Classify (await so we can respond quickly then update Freshdesk async)
     result = await classify_ticket(ticket_text)
-
-    # Fire-and-forget: update Freshdesk + log to DB
     background_tasks.add_task(update_ticket, ticket_id, result)
     background_tasks.add_task(log_classification, ticket_text, result,
                               source="freshdesk", ticket_id=str(ticket_id))
 
     return {"status": "ok", "ticket_id": ticket_id, "triage": result}
 
+
+# ── Jira webhook ──────────────────────────────────────────────────────────────
+
+@app.post("/webhook/jira")
+async def jira_webhook(request: Request, background_tasks: BackgroundTasks):
+    """
+    Receives Jira webhook events (issue_created).
+    Only processes issue types defined in JIRA_ISSUE_TYPES.
+    Classifies and writes results back to Jira.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    # Jira webhook envelope
+    event = body.get("webhookEvent", "")
+    issue = body.get("issue", {})
+    fields = issue.get("fields", {})
+
+    issue_key  = issue.get("key")
+    issue_type = fields.get("issuetype", {}).get("name", "")
+    summary    = fields.get("summary", "")
+    description = _extract_jira_description(fields.get("description", ""))
+
+    if not issue_key:
+        raise HTTPException(status_code=400, detail="Missing issue key in payload")
+
+    # Filter by issue type
+    allowed_types = [t.strip() for t in settings.jira_issue_types.split(",")]
+    if issue_type and issue_type not in allowed_types:
+        return {
+            "status": "skipped",
+            "reason": f"Issue type '{issue_type}' not in triage list ({settings.jira_issue_types})",
+            "issue_key": issue_key
+        }
+
+    ticket_text = f"{summary}\n\n{description}".strip()
+    if not ticket_text:
+        raise HTTPException(status_code=400, detail="Empty issue text")
+
+    result = await classify_ticket(ticket_text)
+    background_tasks.add_task(update_issue, issue_key, result)
+    background_tasks.add_task(log_classification, ticket_text, result,
+                              source="jira", ticket_id=issue_key)
+
+    return {"status": "ok", "issue_key": issue_key, "triage": result}
+
+
+def _extract_jira_description(description) -> str:
+    """
+    Extract plain text from Jira description.
+    Jira Cloud uses Atlassian Document Format (ADF) — a nested JSON structure.
+    Falls back gracefully if description is already a string or None.
+    """
+    if not description:
+        return ""
+    if isinstance(description, str):
+        return description
+
+    # ADF format — recursively extract text nodes
+    texts = []
+
+    def _walk(node):
+        if isinstance(node, dict):
+            if node.get("type") == "text":
+                texts.append(node.get("text", ""))
+            for child in node.get("content", []):
+                _walk(child)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    _walk(description)
+    return " ".join(texts).strip()
+
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    """Serve the web dashboard."""
+    html_path = Path(__file__).parent / "dashboard.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
+# ── Utility endpoints ─────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health():
@@ -103,10 +180,12 @@ async def root():
     return {
         "service": "AI Support Triage Engine",
         "endpoints": {
-            "POST /triage": "Classify a raw ticket string",
+            "POST /triage":            "Classify a raw ticket string",
             "POST /webhook/freshdesk": "Freshdesk webhook receiver",
-            "GET /health": "Health check",
-            "GET /logs": "Recent classification log",
+            "POST /webhook/jira":      "Jira webhook receiver",
+            "GET  /dashboard":         "Web UI dashboard",
+            "GET  /health":            "Health check",
+            "GET  /logs":              "Recent classification log",
         }
     }
 
@@ -127,12 +206,12 @@ async def _cli_classify(ticket_text: str):
     await log_classification(ticket_text, result, source="cli")
 
     severity_colors = {
-        "CRITICAL": "\033[91m",  # red
-        "HIGH":     "\033[93m",  # yellow
-        "MEDIUM":   "\033[94m",  # blue
-        "LOW":      "\033[92m",  # green
+        "CRITICAL": "\033[91m",
+        "HIGH":     "\033[93m",
+        "MEDIUM":   "\033[94m",
+        "LOW":      "\033[92m",
     }
-    sev = result.get("severity", "UNKNOWN")
+    sev   = result.get("severity", "UNKNOWN")
     color = severity_colors.get(sev, "")
     reset = "\033[0m"
 
@@ -152,9 +231,9 @@ async def _cli_classify(ticket_text: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AI Support Triage Engine")
     parser.add_argument("--ticket", type=str, help="Ticket text to classify")
-    parser.add_argument("--serve", action="store_true", help="Start the API server")
-    parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--serve",  action="store_true", help="Start the API server")
+    parser.add_argument("--host",   default="0.0.0.0")
+    parser.add_argument("--port",   type=int, default=8000)
 
     args = parser.parse_args()
 
@@ -165,12 +244,3 @@ if __name__ == "__main__":
     else:
         parser.print_help()
         sys.exit(1)
-
-
-# ── Dashboard ─────────────────────────────────────────────────────────────────
-
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard():
-    """Serve the web dashboard."""
-    html_path = Path(__file__).parent / "dashboard.html"
-    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))

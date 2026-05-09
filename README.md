@@ -46,6 +46,18 @@ A new ticket in Freshdesk triggers a webhook POST to the FastAPI server. The ser
 ![Test report showing 50 tickets: 38 PASS, 10 PARTIAL, 2 FAIL, 94% category accuracy, 93% avg confidence](docs/screenshots/test-report.png)
 *Automated test report — 50 Claude-generated tickets classified and scored across all severity levels and categories*
 
+### Jira — AI triage comment
+![Jira issue showing AI Triage Result comment with severity HIGH, category API/Webhook, 95% confidence and runbook RB-002](docs/screenshots/jira-triage-comment.png)
+*Triage result posted as a formatted comment in Jira — severity, category, confidence, runbook, and suggested next step*
+
+### Jira — backlog with priority and status
+![Jira backlog showing SCRUM-2 with IN PROGRESS status and High priority set automatically](docs/screenshots/jira-backlog.png)
+*Issue automatically transitioned to In Progress with priority set to High by the triage engine*
+
+### Jira — project summary
+![Jira project summary showing 1 work item In Progress](docs/screenshots/jira-summary.png)
+*Project summary reflecting the triage engine's automatic status transition*
+
 
 ---
 
@@ -77,6 +89,7 @@ ai-support-triage-engine/
 │   ├── db.py                # PostgreSQL connection + triage_log schema
 │   ├── config.py            # Env vars, model config
 │   ├── freshdesk.py         # Freshdesk REST API client
+│   ├── jira_client.py       # Jira Cloud REST API client
 │   ├── dashboard.html       # Web UI dashboard
 │   └── runbooks.py          # Runbook mapping by category
 ├── tests/
@@ -87,13 +100,17 @@ ai-support-triage-engine/
 ├── reports/                    # auto-generated HTML test reports
 └── docs/
     ├── FRESHDESK_SETUP.md   # Step-by-step Freshdesk webhook guide
+    ├── JIRA_SETUP.md        # Step-by-step Jira webhook guide
     └── screenshots/
         ├── architecture-diagram.png
         ├── dashboard.png
         ├── cli-classification-output.png
         ├── bruno-triage-response.png
         ├── postgres-triage-log.png
-        └── test-report.png
+        ├── test-report.png
+        ├── jira-triage-comment.png
+        ├── jira-backlog.png
+        └── jira-summary.png
 ```
 
 ---
@@ -176,6 +193,21 @@ When a ticket is created, the engine automatically:
 
 ---
 
+## 🔗 Jira Integration
+
+See **[docs/JIRA_SETUP.md](docs/JIRA_SETUP.md)** for the full step-by-step guide.
+
+When a Bug or Support issue is created in Jira, the engine automatically:
+
+1. Sets the **priority** — CRITICAL→Highest, HIGH→High, MEDIUM→Medium, LOW→Low
+2. Adds **labels** — `ai-triaged`, `triage-high`, `triage-api-webhook`
+3. Posts a **formatted comment** with severity, category, confidence, runbook, and next step
+4. **Transitions the status** — CRITICAL/HIGH → In Progress, MEDIUM → Waiting for Customer
+
+The webhook endpoint accepts standard Jira Cloud webhook payloads at `POST /webhook/jira`. Only issue types defined in `JIRA_ISSUE_TYPES` are triaged — others are skipped with a reason.
+
+---
+
 ## 🧠 How Classification Works
 
 1. Ticket text is sent to Claude with a structured system prompt built from real support patterns
@@ -240,7 +272,7 @@ Reports are saved to `reports/report_YYYYMMDD_HHMMSS.html` and open directly in 
 | Freshdesk webhook integration | ✅ Done |
 | Confidence scoring + fallback | ✅ Done |
 | Automated test suite + HTML report | ✅ Done |
-| Jira webhook integration | 🔜 Planned |
+| Jira webhook integration | ✅ Done |
 | Web UI dashboard | ✅ Done |
 
 ---

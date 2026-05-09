@@ -11,7 +11,11 @@ services:
       - FRESHDESK_DOMAIN=${FRESHDESK_DOMAIN}
       - FRESHDESK_API_KEY=${FRESHDESK_API_KEY}
       - DATABASE_URL=postgresql://triage:triage@postgres:5432/triage
-      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-5}
+      - JIRA_DOMAIN=${JIRA_DOMAIN}
+      - JIRA_EMAIL=${JIRA_EMAIL}
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+      - JIRA_ISSUE_TYPES=${JIRA_ISSUE_TYPES:-Incident,Support}
     depends_on:
       postgres:
         condition: service_healthy

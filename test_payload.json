@@ -1,0 +1,11 @@
+{
+  "webhookEvent": "jira:issue_created",
+  "issue": {
+    "key": "SCRUM-2",
+    "fields": {
+      "summary": "Webhook deliveries failing with 401 after OAuth token rotation",
+      "description": "All webhook deliveries failing since token was rotated this morning.",
+      "issuetype": {"name": "Support"}
+    }
+  }
+}
